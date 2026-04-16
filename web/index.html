@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Healthcare Test Result Predictor</title>
+  <style>
+    body { font-family: Arial, sans-serif; background:#eef1f5; margin:0; padding:30px; }
+    .card { max-width: 760px; margin: 0 auto; background:#fff; border-radius:14px; box-shadow: 0 3px 18px rgba(0,0,0,.08); }
+    .header { padding:28px; border-bottom:1px solid #e4e7ec; }
+    .badge { display:inline-block; background:#e8f0ff; color:#2d5bce; border-radius:14px; padding:6px 12px; font-weight:700; font-size:14px; }
+    h1 { margin:12px 0 8px; }
+    p { color:#6b7280; }
+    .content { padding:24px 28px; }
+    .grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+    .field { display:flex; flex-direction:column; gap:6px; }
+    label { font-weight:600; color:#111827; }
+    input, select { padding:12px; border:1px solid #d1d5db; border-radius:10px; font-size:15px; }
+    .full { grid-column:1 / -1; }
+    .actions { margin-top:20px; display:flex; gap:12px; }
+    button { border:none; border-radius:10px; padding:12px 20px; font-weight:700; cursor:pointer; }
+    .primary { background:#2d5bce; color:#fff; }
+    .secondary { background:#e5e7eb; color:#334155; }
+    #result { margin-top:16px; font-weight:700; }
+    @media (max-width: 768px) { .grid { grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="header">
+      <span class="badge">Healthcare ML System</span>
+      <h1>Healthcare Test Result Predictor</h1>
+      <p>Enter patient details to predict whether test result is normal, abnormal, or inconclusive.</p>
+    </div>
+    <div class="content">
+      <form id="predict-form" class="grid">
+        <div class="field"><label>Age</label><input name="Age" type="number" min="0" max="120" required /></div>
+        <div class="field"><label>Gender</label><select name="Gender" required><option>Male</option><option>Female</option></select></div>
+        <div class="field"><label>Blood Type</label><input name="Blood Type" placeholder="e.g. O+" required /></div>
+        <div class="field"><label>Admission Type</label><select name="Admission Type" required><option>Emergency</option><option>Urgent</option><option>Elective</option></select></div>
+        <div class="field"><label>Billing Amount</label><input name="Billing Amount" type="number" step="0.01" min="0" required /></div>
+        <div class="field"><label>Insurance Provider</label><input name="Insurance Provider" placeholder="e.g. Cigna" required /></div>
+        <div class="field full"><label>Medical Condition</label><input name="Medical Condition" placeholder="e.g. Diabetes" required /></div>
+        <div class="field full"><label>Medication</label><input name="Medication" placeholder="e.g. Aspirin" required /></div>
+        <div class="actions full">
+          <button class="primary" type="submit">Predict Test Result</button>
+          <button class="secondary" type="reset">Clear Form</button>
+        </div>
+      </form>
+      <div id="result"></div>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById('predict-form');
+    const result = document.getElementById('result');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const fd = new FormData(form);
+      const payload = {};
+      for (const [k,v] of fd.entries()) payload[k] = isNaN(v) || v === '' ? v : Number(v);
+
+      result.textContent = 'Predicting...';
+      try {
+        const res = await fetch('/predict', {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'Unknown API error');
+        result.textContent = `Predicted test result: ${data.predicted_test_result}`;
+      } catch (err) {
+        result.textContent = `Error: ${err.message}`;
+      }
+    });
+  </script>
+</body>
+</html>
